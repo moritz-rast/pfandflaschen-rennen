@@ -1,0 +1,29 @@
+backend:
+name: git-gateway
+branch: main
+
+
+media_folder: "assets/uploads"
+public_folder: "/assets/uploads"
+
+
+collections:
+- name: "scores"
+label: "Scores"
+files:
+- file: "scores.json"
+label: "Scores JSON"
+name: "scores"
+fields:
+- { label: "Gesamt", name: "gesamt", widget: "number", default: 0 }
+- label: "Scores"
+name: "scores"
+widget: object
+fields:
+- { label: "SH4", name: "SH4", widget: "number", default: 0 }
+- { label: "SH3", name: "SH3", widget: "number", default: 0 }
+- { label: "SH2", name: "SH2", widget: "number", default: 0 }
+- { label: "SH1-A", name: "SH1-A", widget: "number", default: 0 }
+- { label: "SH1-B", name: "SH1-B", widget: "number", default: 0 }
+- { label: "JH4-A", name: "JH4-A", widget: "number", default: 0 }
+- { label: "JH4-B", name: "JH4-B", widget: "number", default: 0 }
