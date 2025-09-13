@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Race Editor</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #f2f2f2;
+      }
+      .editor {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 400px;
+        margin: auto;
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+      }
+      input {
+        width: 100%;
+        padding: 5px;
+      }
+      button {
+        margin-top: 20px;
+        padding: 10px;
+        width: 100%;
+        background: #007bff;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="editor">
+      <h2>Race Score Editor</h2>
+      <label>Passwort:
+        <input type="password" id="password" />
+      </label>
+
+      <label>SH4:
+        <input type="number" id="sh4" />
+      </label>
+      <label>SH3:
+        <input type="number" id="sh3" />
+      </label>
+      <label>SH2:
+        <input type="number" id="sh2" />
+      </label>
+      <label>SH1-A:
+        <input type="number" id="sh1a" />
+      </label>
+      <label>SH1-B:
+        <input type="number" id="sh1b" />
+      </label>
+      <label>JH4-A:
+        <input type="number" id="jh4a" />
+      </label>
+      <label>JH4-B:
+        <input type="number" id="jh4b" />
+      </label>
+
+      <button onclick="saveScores()">Speichern</button>
+    </div>
+
+    <script>
+      const repoOwner = "DEIN_GITHUB_USERNAME";
+      const repoName = "DEIN_REPO_NAME";
+      const filePath = "scores.json";
+      const branch = "main";
+
+      // ⚠️ Passwortschutz: ganz simpel
+      const ADMIN_PASSWORD = "geheim123";
+
+      async function saveScores() {
+        const pw = document.getElementById("password").value;
+        if (pw !== ADMIN_PASSWORD) {
+          alert("Falsches Passwort!");
+          return;
+        }
+
+        const scores = {
+          gesamt: 0,
+          scores: {
+            SH4: parseInt(document.getElementById("sh4").value) || 0,
+            SH3: parseInt(document.getElementById("sh3").value) || 0,
+            SH2: parseInt(document.getElementById("sh2").value) || 0,
+            "SH1-A": parseInt(document.getElementById("sh1a").value) || 0,
+            "SH1-B": parseInt(document.getElementById("sh1b").value) || 0,
+            "JH4-A": parseInt(document.getElementById("jh4a").value) || 0,
+            "JH4-B": parseInt(document.getElementById("jh4b").value) || 0,
+          },
+        };
+
+        // API-Request vorbereiten
+        const token = "DEIN_GITHUB_TOKEN"; // kommt gleich
+        const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+
+        // Erst aktuellen SHA holen
+        const res = await fetch(url, {
+          headers: { Authorization: `token ${token}` },
+        });
+        const data = await res.json();
+
+        // Datei neu schreiben
+        const newContent = btoa(JSON.stringify(scores, null, 2)); // Base64
+        const updateRes = await fetch(url, {
+          method: "PUT",
+          headers: {
+            Authorization: `token ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: "Update scores.json via editor",
+            content: newContent,
+            sha: data.sha,
+            branch: branch,
+          }),
+        });
+
+        if (updateRes.ok) {
+          alert("Scores gespeichert!");
+        } else {
+          alert("Fehler beim Speichern!");
+        }
+      }
+    </script>
+  </body>
+</html>
