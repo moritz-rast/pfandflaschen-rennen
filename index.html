@@ -37,6 +37,45 @@
     .hidden{display:none}
 
     @media (max-width:600px){.headline{font-size:10vw}.textfeld{font-size:16px}}
+
+      /* --- Mobile Ansicht optimieren --- */
+    @media (max-width: 600px) {
+      :root {
+        --start-left: 60px; /* Autos starten weiter links */
+      }
+
+    .bahn span {
+      width: 60px;       /* Klassennamen schmaler */
+      font-size: 14px;   /* kleinere Schrift */
+      text-align: left;  /* mehr Platz rechts für Autos */
+      padding-left: 5px;
+    }
+
+    .flagge{
+      position:absolute;
+      top:38px;
+      right:7px;
+      width:40px;
+      height:368px;
+      background-color:#ededed;
+      background-image:linear-gradient(45deg,#272727 25%,transparent 25%,transparent 75%,#272727 75%,#000),linear-gradient(45deg,#272727 25%,transparent 25%,transparent 75%,#272727 75%,#000);
+      background-size:40px 40px;background-position:0 0,20px 20px;pointer-events:none;z-index:1
+    } 
+  
+    #manual-flag{
+      position:absolute;top:-30px;
+      right:0px;width:90px;
+      transform:rotate(13deg);
+      pointer-events:none;z-index:1
+    }
+
+    .auto {
+      width: 60px;       /* Autos etwas kleiner */
+    }
+  }
+
+
+    
   </style>
 </head>
 <body>
