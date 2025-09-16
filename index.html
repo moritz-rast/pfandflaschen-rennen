@@ -122,90 +122,99 @@
     // --- Konfiguration ---
     const DATA_FILE = 'scores.json';
     const POLL_MS = 2500; // wie oft die JSON neu geladen wird
-    const ZIEL = 400;
-
-    // Klassengrößen (Beispielzahlen, bitte anpassen!)
+    const ZIEL = 400;     // Ziel: 400 echte Flaschen
+  
+    // genaue Klassengrößen (laut deiner Angabe)
     const KLASSE_GROESSEN = {
       "SH4": 14,
       "SH3": 25,
       "SH2": 17,
       "SH1-A": 16,
       "SH1-B": 16,
-      "JH4-A": 14,
+      "JH4-A": 15,
       "JH4-B": 13
     };
-
-
+  
     // lädt die JSON (bypass cache) und ruft updateUI
-    async function fetchScores(){
-      try{
-        const res = await fetch(DATA_FILE + '?ts=' + Date.now(), {cache: 'no-store'});
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const json = await res.json();
-        return json;
-      }catch(e){
+    async function fetchScores() {
+      try {
+        const res = await fetch(DATA_FILE + '?ts=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } catch (e) {
         console.warn('Fehler beim Laden von', DATA_FILE, e);
         return null;
       }
     }
-
-    async function updateUI(){
+  
+    async function updateUI() {
       const data = await fetchScores();
-      if(!data) return;
-
+      if (!data) return;
+  
       const scores = data.scores || {};
-      const gesamt = data.gesamt || 0;
-      document.getElementById('gesamt').innerText = 'Gesamtanzahl der gesammelten Flaschen: ' + gesamt;
-
+      // berechne die echte Gesamtanzahl (Summe der raw values)
+      const totalRaw = Object.values(scores).reduce((s, v) => s + (Number(v) || 0), 0);
+      document.getElementById('gesamt').innerText =
+        'Gesamtanzahl der gesammelten Flaschen: ' + totalRaw;
+  
       const container = document.getElementById('rennen');
       const containerRect = container.getBoundingClientRect();
       const flag = document.querySelector('.flagge');
       const flagRect = flag.getBoundingClientRect();
-
-      // Ziel-Koordinate (rechte Kante, so dass Auto bis zur Flagge fährt)
+  
+      // Ziel-Koordinate (rechte Kante der Flagge)
       const endX = flagRect.left - containerRect.left - 8; // px
-      const startX = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--start-left')) || 120;
-
+      const startX =
+        parseInt(getComputedStyle(document.documentElement).getPropertyValue('--start-left')) ||
+        120;
+  
       let sieger = '';
-
+  
       // für jede Klasse im JSON
-      for(const klasse in scores){
-        const rawValue = scores[klasse] || 0;
-        const size = KLASSE_GROESSEN[klasse] || 1; 
-        const value = rawValue / size * 100; // Prozentwert
+      for (const klasse in scores) {
+        const rawValue = Number(scores[klasse]) || 0;   // echte Flaschenanzahl
+        const classSize = Number(KLASSE_GROESSEN[klasse]) || 18; // fallback 18
+  
+        // scaled_points: skaliere auf Basis-18 (max. 18)
+        // fair skalieren: Punkte pro Klasse auf Basis 18
+        const scaled = rawValue * (18 / classSize);
 
+        // Fortschritt relativ zum Ziel (400 Flaschen)
+        const proportion = Math.min((scaled / 18) * (rawValue / ZIEL), 1);
+  
         const auto = document.getElementById('auto-' + klasse);
         const lane = document.querySelector('.bahn[data-klasse="' + klasse + '"]');
-        if(!auto || !lane) continue;
-
+        if (!auto || !lane) continue;
+  
         const laneRect = lane.getBoundingClientRect();
         const carRect = auto.getBoundingClientRect();
         const carW = carRect.width || 60;
         const carH = carRect.height || 40;
-
-      // top Position
-      const top = (laneRect.top - containerRect.top) + (laneRect.height - carH)/2;
-      auto.style.top = Math.round(top) + 'px';
-
-      // Links berechnen
-      const proportion = Math.min(value / ZIEL, 1);
-      const maxLeft = endX - carW;
-      const leftPx = Math.round(startX + proportion * (maxLeft - startX));
-      auto.style.left = leftPx + 'px';
-
-      if(value >= ZIEL && !sieger) sieger = klasse;
-    }
-
-
+  
+        // top Position so, dass Auto in der Mitte der Bahn sitzt
+        const top = laneRect.top - containerRect.top + (laneRect.height - carH) / 2;
+        auto.style.top = Math.round(top) + 'px';
+  
+        // Links berechnen: linear zwischen startX und maxLeft
+        const maxLeft = endX - carW;
+        const leftPx = Math.round(startX + proportion * (maxLeft - startX));
+        auto.style.left = leftPx + 'px';
+  
+        // Sieger bestimmen: nur anhand der echten Flaschen (rawValue >= ZIEL)
+        if (rawValue >= ZIEL && !sieger) sieger = klasse;
+      }
+  
       document.getElementById('sieger').innerText = sieger ? '🏆 ' + sieger + ' hat gewonnen!' : '';
     }
-
+  
     // Polling starten
     updateUI();
     setInterval(updateUI, POLL_MS);
-
+  
     // auch bei resize neu positionieren
     window.addEventListener('resize', updateUI);
   </script>
+  
+
 </body>
 </html>
