@@ -37,50 +37,11 @@
     .hidden{display:none}
 
     @media (max-width:600px){.headline{font-size:10vw}.textfeld{font-size:16px}}
-
-      /* --- Mobile Ansicht optimieren --- */
-    @media (max-width: 600px) {
-      :root {
-        --start-left: 60px; /* Autos starten weiter links */
-      }
-
-    .bahn span {
-      width: 60px;       /* Klassennamen schmaler */
-      font-size: 14px;   /* kleinere Schrift */
-      text-align: left;  /* mehr Platz rechts für Autos */
-      padding-left: 5px;
-    }
-
-    .flagge{
-      position:absolute;
-      top:38px;
-      right:7px;
-      width:40px;
-      height:368px;
-      background-color:#ededed;
-      background-image:linear-gradient(45deg,#272727 25%,transparent 25%,transparent 75%,#272727 75%,#000),linear-gradient(45deg,#272727 25%,transparent 25%,transparent 75%,#272727 75%,#000);
-      background-size:40px 40px;background-position:0 0,20px 20px;pointer-events:none;z-index:1
-    } 
-  
-    #manual-flag{
-      position:absolute;top:-30px;
-      right:0px;width:90px;
-      transform:rotate(13deg);
-      pointer-events:none;z-index:1
-    }
-
-    .auto {
-      width: 60px;       /* Autos etwas kleiner */
-    }
-  }
-
-
-    
   </style>
 </head>
 <body>
   <div class="himmel">
-    <div class="headline">Pfandflaschen‑Rennen</div>
+    <div class="headline">Pfandflaschen-Rennen</div>
     <div class="textfeld" id="gesamt">Gesamtanzahl der gesammelten Flaschen: 0</div>
     <div class="textfeld" id="sieger"></div>
   </div>
@@ -104,7 +65,7 @@
     <div class="flagge"></div>
     <img id="manual-flag" src="flag.png" alt="Deine Flagge">
 
-    <!-- Autos: liegen in .strecke (oben/left werden per JS gesetzt) -->
+    <!-- Autos -->
     <img id="auto-SH4" class="auto" src="auto1.png" alt="SH4">
     <img id="auto-SH3" class="auto" src="auto2.png" alt="SH3">
     <img id="auto-SH2" class="auto" src="auto3.png" alt="SH2">
@@ -122,99 +83,66 @@
     // --- Konfiguration ---
     const DATA_FILE = 'scores.json';
     const POLL_MS = 2500; // wie oft die JSON neu geladen wird
-    const ZIEL = 400;     // Ziel: 400 echte Flaschen
-  
-    // genaue Klassengrößen (laut deiner Angabe)
-    const KLASSE_GROESSEN = {
-      "SH4": 14,
-      "SH3": 25,
-      "SH2": 17,
-      "SH1-A": 16,
-      "SH1-B": 16,
-      "JH4-A": 15,
-      "JH4-B": 13
-    };
-  
-    // lädt die JSON (bypass cache) und ruft updateUI
-    async function fetchScores() {
-      try {
-        const res = await fetch(DATA_FILE + '?ts=' + Date.now(), { cache: 'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return await res.json();
-      } catch (e) {
+    const ZIEL = 300; // <--- Ziellinie auf 300 Flaschen gesetzt
+
+    async function fetchScores(){
+      try{
+        const res = await fetch(DATA_FILE + '?ts=' + Date.now(), {cache: 'no-store'});
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const json = await res.json();
+        return json;
+      }catch(e){
         console.warn('Fehler beim Laden von', DATA_FILE, e);
         return null;
       }
     }
-  
-    async function updateUI() {
+
+    async function updateUI(){
       const data = await fetchScores();
-      if (!data) return;
-  
+      if(!data) return;
+
       const scores = data.scores || {};
-      // berechne die echte Gesamtanzahl (Summe der raw values)
-      const totalRaw = Object.values(scores).reduce((s, v) => s + (Number(v) || 0), 0);
-      document.getElementById('gesamt').innerText =
-        'Gesamtanzahl der gesammelten Flaschen: ' + totalRaw;
-  
+      const gesamt = data.gesamt || 0;
+      document.getElementById('gesamt').innerText = 'Gesamtanzahl der gesammelten Flaschen: ' + gesamt;
+
       const container = document.getElementById('rennen');
       const containerRect = container.getBoundingClientRect();
       const flag = document.querySelector('.flagge');
       const flagRect = flag.getBoundingClientRect();
-  
-      // Ziel-Koordinate (rechte Kante der Flagge)
-      const endX = flagRect.left - containerRect.left - 8; // px
-      const startX =
-        parseInt(getComputedStyle(document.documentElement).getPropertyValue('--start-left')) ||
-        120;
-  
-      let sieger = '';
-  
-      // für jede Klasse im JSON
-      for (const klasse in scores) {
-        const rawValue = Number(scores[klasse]) || 0;   // echte Flaschenanzahl
-        const classSize = Number(KLASSE_GROESSEN[klasse]) || 18; // fallback 18
-  
-        // scaled_points: skaliere auf Basis-18 (max. 18)
-        // fair skalieren: Punkte pro Klasse auf Basis 18
-        const scaled = rawValue * (18 / classSize);
 
-        // Fortschritt relativ zum Ziel (400 Flaschen)
-        const proportion = Math.min((scaled / 18) * (rawValue / ZIEL), 1);
-  
+      const endX = flagRect.left - containerRect.left - 8;
+      const startX = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--start-left')) || 120;
+
+      let sieger = '';
+
+      for(const klasse in scores){
+        const value = scores[klasse] || 0;
         const auto = document.getElementById('auto-' + klasse);
         const lane = document.querySelector('.bahn[data-klasse="' + klasse + '"]');
-        if (!auto || !lane) continue;
-  
+        if(!auto || !lane) continue;
+
         const laneRect = lane.getBoundingClientRect();
         const carRect = auto.getBoundingClientRect();
         const carW = carRect.width || 60;
         const carH = carRect.height || 40;
-  
-        // top Position so, dass Auto in der Mitte der Bahn sitzt
-        const top = laneRect.top - containerRect.top + (laneRect.height - carH) / 2;
+
+        const top = (laneRect.top - containerRect.top) + (laneRect.height - carH)/2;
         auto.style.top = Math.round(top) + 'px';
-  
-        // Links berechnen: linear zwischen startX und maxLeft
+
+        const proportion = Math.min(value / ZIEL, 1);
         const maxLeft = endX - carW;
         const leftPx = Math.round(startX + proportion * (maxLeft - startX));
         auto.style.left = leftPx + 'px';
-  
-        // Sieger bestimmen: nur anhand der echten Flaschen (rawValue >= ZIEL)
-        if (rawValue >= ZIEL && !sieger) sieger = klasse;
+
+        if(value >= ZIEL && !sieger) sieger = klasse;
       }
-  
+
       document.getElementById('sieger').innerText = sieger ? '🏆 ' + sieger + ' hat gewonnen!' : '';
     }
-  
-    // Polling starten
+
     updateUI();
     setInterval(updateUI, POLL_MS);
-  
-    // auch bei resize neu positionieren
     window.addEventListener('resize', updateUI);
   </script>
-  
-
 </body>
 </html>
