@@ -26,7 +26,7 @@
     .grau{background:#5e5c5c}
 
     .flagge{position:absolute;top:38px;right:85px;width:40px;height:368px;background-color:#ededed;background-image:linear-gradient(45deg,#272727 25%,transparent 25%,transparent 75%,#272727 75%,#000),linear-gradient(45deg,#272727 25%,transparent 25%,transparent 75%,#272727 75%,#000);background-size:40px 40px;background-position:0 0,20px 20px;pointer-events:none;z-index:1}
-    #manual-flag{position:absolute;top:-50px;right:5px;width:110px;transform:rotate(13deg);pointer-events:none;z-index:1}
+    #manual-flag{position:absolute;top:-50px;right:5px;width:110px;transform:rotate(14deg);pointer-events:none;z-index:1}
 
     .auto{position:absolute;left:var(--start-left);width:80px;height:auto;transition:left 800ms ease, transform 300ms ease;z-index:3}
 
@@ -35,7 +35,45 @@
     .login button:hover{background:#51aa54}
     .hidden{display:none}
 
-    @media (max-width:600px){.headline{font-size:10vw}.textfeld{font-size:16px}}
+    /* --- Mobile Ansicht optimieren --- */
+    @media (max-width: 600px) {
+
+      .headline {
+        font-size:10vw
+      }
+      
+      .textfeld { 
+        font-size:16px
+      }
+
+      :root {
+        --start-left: 60px; /* Autos starten weiter links */
+      }
+
+      .bahn span {
+        width: 60px;       /* Klassennamen schmaler */
+        font-size: 14px;   /* kleinere Schrift */
+        text-align: left;  /* mehr Platz rechts für Autos */
+        padding-left: 5px;
+      }
+
+      .flagge {
+        right: 20px;       /* Ziellinie weiter nach rechts */
+      }
+
+      #manual-flag {
+        right: 13px;      /* Flaggenbild anpassen */
+        transform: rotate(14deg);
+        width: 80px;
+        top: -27px;
+      }
+
+      .auto {
+        width: 60px;       /* Autos etwas kleiner */
+      }
+    }
+
+
   </style>
 </head>
 <body>
@@ -145,7 +183,7 @@
         auto.style.top = Math.round(top) + 'px';
 
         // Ende = ganz rechts
-        const endX = containerWidth - carW - 10;
+        const endX = containerWidth - carW - 3;
         const proportion = Math.min(punkte / ZIEL, 1);
         const leftPx = Math.round(startX + proportion * (endX - startX));
         auto.style.left = leftPx + 'px';
