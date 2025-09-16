@@ -30,11 +30,6 @@
 
     .auto{position:absolute;left:var(--start-left);width:80px;height:auto;transition:left 800ms ease, transform 300ms ease;z-index:3}
 
-    .login{margin:20px;text-align:center}
-    .login button{background:#63c066;color:#fff;border:0;padding:10px 20px;margin:5px;border-radius:8px;font-size:16px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.2)}
-    .login button:hover{background:#51aa54}
-    .hidden{display:none}
-
     /* --- Mobile Ansicht optimieren --- */
     @media (max-width: 600px) {
 
@@ -112,10 +107,6 @@
     <img id="auto-JH4-B" class="auto" src="auto7.png" alt="JH4-B">
   </div>
 
-  <div class="login">
-    <a href="/admin/" style="text-decoration:none"><button>Admin (Netlify CMS)</button></a>
-  </div>
-
   <script>
     // --- Konfiguration ---
     const DATA_FILE = 'scores.json';
@@ -125,7 +116,7 @@
     // Klassengrößen
     const KLASSE_SIZE = {
       "SH4": 14,
-      "SH3": 22,
+      "SH3": 21,
       "SH2": 17,
       "SH1-A": 16,
       "SH1-B": 16,
