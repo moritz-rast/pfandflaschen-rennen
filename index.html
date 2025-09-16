@@ -16,7 +16,7 @@
     .gras1{background:#63c066;height:35px}
     .gras2{background:#51aa54;height:10px}
 
-    .strecke{position:relative;display:block}
+    .strecke{position:relative;display:block;overflow:hidden}
     .bahnoben{height:35px}
 
     .bahn{height:53px;display:flex;align-items:center;justify-content:flex-start;font-weight:700;color:#fff;font-size:20px;padding-left:10px;box-sizing:border-box}
@@ -28,7 +28,6 @@
     .flagge{position:absolute;top:38px;right:85px;width:40px;height:368px;background-color:#ededed;background-image:linear-gradient(45deg,#272727 25%,transparent 25%,transparent 75%,#272727 75%,#000),linear-gradient(45deg,#272727 25%,transparent 25%,transparent 75%,#272727 75%,#000);background-size:40px 40px;background-position:0 0,20px 20px;pointer-events:none;z-index:1}
     #manual-flag{position:absolute;top:-50px;right:5px;width:110px;transform:rotate(13deg);pointer-events:none;z-index:1}
 
-    /* Autos werden absolut in .strecke positioniert (oben/left in px) */
     .auto{position:absolute;left:var(--start-left);width:80px;height:auto;transition:left 800ms ease, transform 300ms ease;z-index:3}
 
     .login{margin:20px;text-align:center}
@@ -82,8 +81,21 @@
   <script>
     // --- Konfiguration ---
     const DATA_FILE = 'scores.json';
-    const POLL_MS = 2500; // wie oft die JSON neu geladen wird
-    const ZIEL = 300; // <--- Ziellinie auf 300 Flaschen gesetzt
+    const POLL_MS = 2500;
+    const ZIEL = 400;
+
+    // Klassengrößen
+    const KLASSE_SIZE = {
+      "SH4": 14,
+      "SH3": 25,
+      "SH2": 17,
+      "SH1-A": 16,
+      "SH1-B": 16,
+      "JH4-A": 15,
+      "JH4-B": 13
+    };
+
+    const PUNKTE_PRO_KOPF = 16.5; // wenn alle 1 Flasche gesammelt haben
 
     async function fetchScores(){
       try{
@@ -107,34 +119,38 @@
 
       const container = document.getElementById('rennen');
       const containerRect = container.getBoundingClientRect();
-      const flag = document.querySelector('.flagge');
-      const flagRect = flag.getBoundingClientRect();
+      const containerWidth = containerRect.width;
 
-      const endX = flagRect.left - containerRect.left - 8;
       const startX = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--start-left')) || 120;
 
       let sieger = '';
 
       for(const klasse in scores){
-        const value = scores[klasse] || 0;
+        const flaschen = scores[klasse] || 0;
         const auto = document.getElementById('auto-' + klasse);
         const lane = document.querySelector('.bahn[data-klasse="' + klasse + '"]');
         if(!auto || !lane) continue;
+
+        // --- faire Punkteberechnung ---
+        const size = KLASSE_SIZE[klasse] || 1;
+        const punkte = (flaschen / size) * PUNKTE_PRO_KOPF;
 
         const laneRect = lane.getBoundingClientRect();
         const carRect = auto.getBoundingClientRect();
         const carW = carRect.width || 60;
         const carH = carRect.height || 40;
 
+        // Position vertikal
         const top = (laneRect.top - containerRect.top) + (laneRect.height - carH)/2;
         auto.style.top = Math.round(top) + 'px';
 
-        const proportion = Math.min(value / ZIEL, 1);
-        const maxLeft = endX - carW;
-        const leftPx = Math.round(startX + proportion * (maxLeft - startX));
+        // Ende = ganz rechts
+        const endX = containerWidth - carW - 10;
+        const proportion = Math.min(punkte / ZIEL, 1);
+        const leftPx = Math.round(startX + proportion * (endX - startX));
         auto.style.left = leftPx + 'px';
 
-        if(value >= ZIEL && !sieger) sieger = klasse;
+        if(punkte >= ZIEL && !sieger) sieger = klasse;
       }
 
       document.getElementById('sieger').innerText = sieger ? '🏆 ' + sieger + ' hat gewonnen!' : '';
